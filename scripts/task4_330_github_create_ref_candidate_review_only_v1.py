@@ -13,7 +13,9 @@ Important:
 from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
+from http.client import HTTPSConnection, HTTPException
 import json
+import ssl
 import os
 from pathlib import Path
 import re
@@ -166,7 +168,58 @@ def real_create_ref_once_under_future_authorization(*,env=None,transport_factory
          type(APPROVED_WORKFLOW_HEAD_SHA) is str and
          HEX40.fullmatch(APPROVED_WORKFLOW_HEAD_SHA) is not None,
          "FUTURE_REAL_GITHUB_REF_WRITE_NOT_APPROVED_IN_SOURCE")
-    raise Denied("NO_ACTUAL_WRITER_IMPLEMENTED_IN_REVIEW_ONLY_PR")
+    values=os.environ if env is None else env
+    need(type(values) is dict or values is os.environ,
+         "EXACT_FUTURE_WORKFLOW_CONTEXT_REQUIRED")
+    need(values.get("GITHUB_REPOSITORY")==LAB
+         and values.get("GITHUB_REF")=="refs/heads/main"
+         and values.get("GITHUB_EVENT_NAME")=="workflow_dispatch"
+         and values.get("GITHUB_RUN_ATTEMPT")=="1"
+         and str(values.get("GITHUB_RUN_ID","")).isdigit()
+         and values.get("GITHUB_SHA")==APPROVED_WORKFLOW_HEAD_SHA,
+         "FUTURE_GITHUB_MAIN_MANUAL_ONE_ATTEMPT_AND_EXACT_HEAD_REQUIRED")
+    workflow=(LAB+"/.github/workflows/"
+              "task4-330-authorized-create-ref.yml@refs/heads/main")
+    need(values.get("GITHUB_WORKFLOW_REF")==workflow,
+         "FUTURE_REVIEWED_DEFAULT_BRANCH_WORKFLOW_REQUIRED")
+    need(not any(values.get(k) for k in PROVIDER_KEYS),
+         "ANY_PROVIDER_SECRET_OR_ENDPOINT_DENIED")
+    token=values.get("GITHUB_TOKEN")
+    need(type(token) is str and len(token)>10 and "\\n" not in token
+         and "\\r" not in token,"ONLY_SHORT_LIVED_JOB_GITHUB_TOKEN_ALLOWED")
+    headers={
+       "Authorization":"Bearer "+token,
+       "Accept":"application/vnd.github+json",
+       "Content-Type":"application/json",
+       "X-GitHub-Api-Version":GITHUB_API_VERSION,
+       "User-Agent":"task4-330-isolated-lab-one-shot"
+    }
+    # Caller may inject a controlled fake HTTPSConnection factory in unit tests.
+    # In production this reaches ONLY the fixed api.github.com hostname.
+    factory=HTTPSConnection if transport_factory is None else transport_factory
+    conn=None
+    status=None
+    payload=None
+    try:
+        conn=factory(GITHUB_HOST,timeout=10,context=ssl.create_default_context())
+        # EXACTLY ONE POST. There is deliberately no retry loop, follow-redirect
+        # logic, external endpoint, arbitrary user-specified ref, or force mode.
+        conn.request("POST",POST_PATH,body=canonical(proposed_request()),
+                     headers=headers)
+        response=conn.getresponse()
+        status=response.status
+        b=response.read(4097)
+        if len(b)<=4096:
+            payload=json.loads(b.decode("utf-8"))
+    except (HTTPException,OSError,TimeoutError,UnicodeError,ValueError):
+        status=None
+        payload=None
+    finally:
+        if conn is not None:conn.close()
+    outcome=classify_create_ref_response(status,payload)
+    outcome["real_github_evidence"]=False  # Must be reconciled by a third run.
+    outcome["real_github_create_ref_authorized"]=False # Not Provider authority.
+    return outcome
 
 def write_report(output):
     target=Path(output).resolve()
