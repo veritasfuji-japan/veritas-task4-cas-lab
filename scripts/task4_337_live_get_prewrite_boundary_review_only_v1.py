@@ -31,7 +31,7 @@ TARGET="9edd28eee24da559fc0ad24fd97291944acc2ed4"
 RULESET_ID=24880024
 RULESET_UPDATED_AT="2026-10-11T22:00:45.379+09:00"
 GITHUB_HOST="api.github.com"
-HEX40=re.compile(r"[a-f0-9]{40}\\Z")
+HEX40=re.compile(r"[a-f0-9]{40}")
 PATHS={
     "repository":"/repos/"+REPO,
     "main":"/repos/"+REPO+"/commits/main",
@@ -142,7 +142,10 @@ def verify_five_exact_gets(responses,*,expected_head):
     need(main.get("sha")==expected_head,"MAIN_HEAD_PIN_MISMATCH")
     target=responses["target"]["body"]
     need(target.get("sha")==TARGET,"EXISTING_TARGET_MISMATCH")
-    rules.require_frozen_ruleset(responses["ruleset"]["body"])
+    try:
+        rules.require_frozen_ruleset(responses["ruleset"]["body"])
+    except rules.Denied as exc:
+        raise Denied("RULESET_PREWRITE_NOT_FROZEN") from exc
     ref=responses["candidate"]["body"]
     need(ref.get("message")=="Not Found"
          and "ref" not in ref and "object" not in ref,
@@ -180,7 +183,7 @@ def future_readonly_get_once(method,path,*,token,transport_factory=None):
          "NO_NETWORK_PREFLIGHT_APPROVAL_IN_SOURCE")
     validate_readonly_transport_request(method,path)
     need(type(token) is str and len(token)>10
-         and "\\r" not in token and "\\n" not in token,
+         and "\r" not in token and "\n" not in token,
          "SHORT_LIVED_EXPLICIT_TOKEN_REQUIRED")
     factory=HTTPSConnection if transport_factory is None else transport_factory
     conn=None
@@ -249,7 +252,7 @@ def main(argv):
          and not path.exists(),"ONLY_FRESH_FIXED_REPORT_PATH")
     r=review()
     path.parent.mkdir(parents=True,exist_ok=True)
-    path.write_text(json.dumps(r,indent=2,sort_keys=True)+"\\n",encoding="utf-8")
+    path.write_text(json.dumps(r,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print("TASK4_337_FIVE_GET_PREFLIGHT_SYNTHETIC_ONLY_ZERO_REAL_POSTS")
 
 if __name__=="__main__": main(sys.argv)
