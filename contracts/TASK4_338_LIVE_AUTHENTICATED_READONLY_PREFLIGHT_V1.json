@@ -1,0 +1,51 @@
+{
+  "schema": "veritas.task4.live-authenticated-five-get-readonly-preflight.v1",
+  "rule_of_one": "TASK4_338_REAL_AUTHENTICATED_GITHUB_GET_NO_EXECUTION_AUTHORITY",
+  "repo": "veritasfuji-japan/veritas-task4-cas-lab",
+  "repo_id": 1414228001,
+  "visibility": "public",
+  "workflow_path": ".github/workflows/task4-338-live-authenticated-readonly-preflight-manual.yml",
+  "trial_ref": "refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73",
+  "target_sha": "9edd28eee24da559fc0ad24fd97291944acc2ed4",
+  "ruleset_id": 24880024,
+  "ruleset_updated_at": "2026-10-11T22:00:45.379+09:00",
+  "ruleset_rules": [
+    "deletion",
+    "non_fast_forward",
+    "update"
+  ],
+  "read_only_token_permissions": "contents:read",
+  "auth_token_source": "github.token only in manual readonly workflow",
+  "get_endpoints": [
+    "repository",
+    "main",
+    "target",
+    "ruleset",
+    "candidate"
+  ],
+  "expected_status": [
+    200,
+    200,
+    200,
+    200,
+    404
+  ],
+  "source_main_at_review": "bdf7d0edd37a204a875d9238fd01a1b142610685",
+  "allowed_methods": [
+    "GET"
+  ],
+  "max_requests": 5,
+  "max_retries": 0,
+  "allow_bypass_field_withheld_as_proof": false,
+  "actor_bypass_visibility_required_for_full_success": true,
+  "workflow_dispatch_only": true,
+  "manual_owner_actor_only": true,
+  "main_branch_only": true,
+  "run_attempt": "1",
+  "github_write_post_authorized": false,
+  "actual_git_ref_write_count": 0,
+  "provider_posts": 0,
+  "real_cas_proven": false,
+  "admin_irrevocability_proven": false,
+  "classification": "LIVE_READONLY_GET_EVIDENCE_ONLY_NOT_A_POST_AUTHORIZATION"
+}
