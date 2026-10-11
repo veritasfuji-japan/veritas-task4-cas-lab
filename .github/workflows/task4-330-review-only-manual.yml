@@ -1,0 +1,80 @@
+name: Task4 330 Manual Review-Only GitHub CreateRef CAS (NO WRITE)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-only-no-ref-write:
+    if: github.repository == 'veritasfuji-japan/veritas-task4-cas-lab' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      OPENAI_API_KEY: ""
+      TASK4_OPENAI_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      OPENAI_BASE_URL: ""
+      VERITAS_DATABASE_URL: ""
+      GITHUB_TOKEN: ""
+      GH_TOKEN: ""
+      PYTHONNOUSERSITE: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11.16"
+      - name: Check exact SHA, lab and no external credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          test "${{ github.repository }}" = "veritasfuji-japan/veritas-task4-cas-lab"
+          test "${{ github.ref }}" = "refs/heads/main"
+          git rev-parse HEAD > results/task4-330-actual-head.txt
+          echo "${{ github.sha }}" > results/task4-330-expected-head.txt
+          test "$(cat results/task4-330-actual-head.txt)" = "$(cat results/task4-330-expected-head.txt)"
+          for k in GITHUB_TOKEN GH_TOKEN OPENAI_API_KEY TASK4_OPENAI_API_KEY ANTHROPIC_API_KEY OPENAI_BASE_URL VERITAS_DATABASE_URL; do
+            test -z "${!k:-}"
+          done
+      - name: Run source-gate and HTTP-denial fixture tests (all OFFLINE)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "pytest==9.1.1"
+          python -m pytest -q -o addopts= tests/test_task4_330_github_cas_review_only_v1.py \
+            --junitxml=results/task4-330-review-junit.xml \
+            | tee results/task4-330-review-pytest.log
+          python scripts/task4_330_github_create_ref_candidate_review_only_v1.py \
+            results/task4-330-review-only-report.json \
+            | tee results/task4-330-review.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          x=json.loads(pathlib.Path("results/task4-330-review-only-report.json").read_text())
+          signature=x.pop("report_sha256")
+          actual=hashlib.sha256(json.dumps(x,sort_keys=True,ensure_ascii=False,
+               separators=(",",":"),allow_nan=False).encode()).hexdigest()
+          assert signature==actual
+          assert x["real_github_ref_create_calls"]==x["actual_github_network_calls"]==0
+          assert x["source_gate_open"] is False
+          assert x["available_source_workflow_contents_write"] is False
+          assert x["real_github_ref_cas_confirmed"] is False
+          assert x["live_provider_dispatch"]=="DENY"
+          print("TASK4_330_SOURCE_GATED_REVIEW_ONLY_NO_NETWORK_AND_NO_WRITE")
+          PY
+          sha256sum scripts/task4_330_github_create_ref_candidate_review_only_v1.py \
+            tests/test_task4_330_github_cas_review_only_v1.py \
+            contracts/TASK4_330_GITHUB_CAS_REVIEW_ONLY_V1.json \
+            results/task4-330-review-only-report.json \
+            > results/task4-330-source-report-sha256.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: task4-330-no-ref-write-review-only-v1
+          path: results/*
+          if-no-files-found: warn
