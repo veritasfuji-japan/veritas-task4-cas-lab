@@ -28,7 +28,7 @@ FIXED_TARGET=parent.TARGET_SHA
 REF_PATH=parent.GET_PATH
 CREATE_PATH=parent.POST_PATH
 EXPECTED_ROLES=("PREFLIGHT","A","B","C")
-ALLOWED_STATUSES={"PREFLIGHT":404,"A":201,"B":422,"C":200}
+ALLOWED_STATUSES={"PREFLIGHT":404,"A":201,"B":422,"C":200} # fixture only; A/B race winner can be either
 RUN_PATTERN=re.compile(r"[1-9][0-9]{7,15}\Z")
 JOB_PATTERN=re.compile(r"[1-9][0-9]{7,15}\Z")
 HEX64=re.compile(r"[a-f0-9]{64}\Z")
@@ -130,6 +130,7 @@ def validate_bundle(bundle):
          "PARENT_LIVE_GITHUB_REF_WRITER_MUST_REMAIN_OFF")
     observed_runs=set()
     observed_jobs=set()
+    ab_statuses=[]
     for idx,role in enumerate(EXPECTED_ROLES):
         p=receipts[idx]
         need(type(p) is dict and set(p)==receipt_fields(),
@@ -150,11 +151,18 @@ def validate_bundle(bundle):
             ("workflow_ref","refs/heads/main"),
             ("workflow_head_sha",FIXTURE_WORKFLOW_HEAD),
             ("trial_ref",REF),("target_commit",FIXED_TARGET),
-            ("origin",ALLOWED_ORIGIN),("http_status",ALLOWED_STATUSES[role]),
+            ("origin",ALLOWED_ORIGIN),
             ("request_sha256",sha(parent.proposed_request()) if role in ("A","B")
              else sha({"GET":REF_PATH}))):
             need(type(p[field]) is type(value) and p[field]==value,
                  "RECEIPT_FROZEN_FIELD_MISMATCH_"+field)
+        if role in ("A","B"):
+            need(type(p["http_status"]) is int and p["http_status"] in (201,422),
+                 "ONLY_ONE_CANDIDATE_AND_ONE_VALIDATED_DUPLICATE")
+            ab_statuses.append(p["http_status"])
+        else:
+            need(type(p["http_status"]) is int and p["http_status"]==ALLOWED_STATUSES[role],
+                 "EXACT_PREFLIGHT_AND_READBACK_STATUS_REQUIRED")
         run=p["run_id"];job=p["job_id"]
         need(type(run) is str and RUN_PATTERN.fullmatch(run) is not None
              and run not in observed_runs,"RUN_ID_NONUNIQUE_OR_INVALID")
@@ -164,7 +172,7 @@ def validate_bundle(bundle):
         if role=="PREFLIGHT":
             need(payload=={"message":"Not Found"},
                  "ONLY_SYNTHETIC_MISSING_REF_PRESTATE_ACCEPTED")
-        elif role in ("A","C"):
+        elif role=="C" or (role in ("A","B") and p["http_status"]==201):
             need(payload=={"ref":REF,"object":{"sha":FIXED_TARGET,"type":"commit"}},
                  "GIT_REF_IDENTITY_AND_TARGET_MUST_MATCH")
         else:
@@ -174,6 +182,8 @@ def validate_bundle(bundle):
                            "errors":[{"code":"already_exists",
                                       "resource":"Reference"}]},
                  "422_ONLY_NOT_PROOF_OF_DUPLICATE")
+    need(sorted(ab_statuses)==[201,422],
+         "BOTH_CREATE_CANDIDATES_MUST_HAVE_EXACT_ONE_WINNER")
     return {
        "rule_of_one":RULE,
        "classification":CLASSIFICATION,
