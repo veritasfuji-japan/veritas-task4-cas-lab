@@ -8,6 +8,7 @@ A clean observation is NOT writer authority; future A/B MUST recheck.
 """
 from __future__ import annotations
 import hashlib
+from datetime import datetime, timezone
 from http.client import HTTPSConnection, HTTPException
 import json
 import os
@@ -35,6 +36,13 @@ HOST="api.github.com"
 LIMIT_BYTES=262144
 KEYS=tuple(parent.ORDER)
 HEX40=re.compile(r"[0-9a-f]{40}\Z")
+# RFC3339 with explicit time-zone and at most 6 fractional digits:
+# reject naive dates, variable precision beyond microseconds and leap seconds.
+RFC3339_INSTANT=re.compile(
+    r"[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])"
+    r"T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]"
+    r"(?:\.[0-9]{1,6})?(?:Z|[+-](?:0[0-9]|1[0-4]):[0-5][0-9])\Z"
+)
 CONTRACT=ROOT/"contracts/TASK4_338_LIVE_AUTHENTICATED_READONLY_PREFLIGHT_V1.json"
 PROVIDER_KEYS=("OPENAI_API_KEY","TASK4_OPENAI_API_KEY","ANTHROPIC_API_KEY","OPENAI_BASE_URL","VERITAS_DATABASE_URL")
 
@@ -138,6 +146,29 @@ def exact_get_one(key,*,token,transport_factory=None):
     finally:
         if conn is not None:conn.close()
 
+def strict_utc_instant(raw):
+    """Exact RFC3339 instant, microsecond precision. No heuristics or tolerance."""
+    if type(raw) is not str or RFC3339_INSTANT.fullmatch(raw) is None:
+        raise Denied("RULESET_UPDATED_AT_INVALID_RFC3339")
+    # RFC3339 caps signed numeric zone offsets at 14:00, never 14:01.
+    if raw[-6:-3] in ("+14", "-14") and raw[-2:] != "00":
+        raise Denied("RULESET_UPDATED_AT_INVALID_MAX_OFFSET")
+    try:
+        date=datetime.fromisoformat(raw.replace("Z","+00:00"))
+        need(date.tzinfo is not None and date.utcoffset() is not None,
+             "RULESET_UPDATED_AT_TIMEZONE_REQUIRED")
+        return date.astimezone(timezone.utc)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise Denied("RULESET_UPDATED_AT_INVALID_RFC3339") from exc
+
+
+def same_exact_instant(observed, frozen):
+    try:
+        return strict_utc_instant(observed)==strict_utc_instant(frozen)
+    except Denied:
+        return False
+
+
 def static_ruleset_drift_fields(body):
     """Only allowlisted FIELD NAMES and presence labels, never response values.
 
@@ -160,7 +191,10 @@ def static_ruleset_drift_fields(body):
         name+(":missing" if name not in body else ":mismatch")
         for name,want in expected.items()
         if name not in body or
-           type(body[name]) is not type(want) or body[name]!=want
+           type(body[name]) is not type(want) or (
+               not same_exact_instant(body[name],want)
+               if name=="updated_at" else body[name]!=want
+           )
     ]
 
 
@@ -212,6 +246,8 @@ def evaluate(responses,*,expected_sha):
         "current_actor_bypass_visible":actor_visible,
         "ruleset_full_bypass_verified":fully_visible,
         "admin_can_modify_ruleset_not_excluded":True,
+        "ruleset_updated_at_exact_instant_verified":True,
+        "ruleset_updated_at_text_format_differs":ruleset["updated_at"]!=RULESET_UPDATED_AT,
         "write_authorized":False,"real_cross_run_cas_proven":False
     }
 
