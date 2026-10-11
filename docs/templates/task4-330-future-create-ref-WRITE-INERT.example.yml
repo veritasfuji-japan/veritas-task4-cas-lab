@@ -1,0 +1,28 @@
+# NOT_ACTIVATED: REVIEW-ONLY DOCUMENT EXAMPLE.
+# Kept in docs/templates, NOT .github/workflows. No executable writer exists.
+# Moving this into .github/workflows OR enabling contents:write requires
+# an entirely separate explicit owner authorization and approved PR.
+name: FUTURE TASK4 330 ISOLATED LAB CREATE REF (NOT ACTIVATED)
+on:
+  workflow_dispatch:
+
+# REQUIRED ONLY IN A FUTURE EXPLICITLY APPROVED WRITE WORKFLOW:
+permissions:
+  contents: write
+
+jobs:
+  no-write-without-new-approval:
+    if: ${{ false }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: This template is permanently inert
+        run: |
+          echo "NOT_ACTIVATED: Do not run a live CreateRef from this template."
+          exit 1
+
+# Future activation must never trust pull_request code, source a Provider key,
+# use automatic retries, auto-post after ambiguous network results, allow a
+# mutable ref ID, claim independent GitHub admin custody or claim model scoring.
+# Proposed fixed ref only:
+# refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73
+# NOTE: contents:write is repository-wide, not limited to that ref.
