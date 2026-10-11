@@ -43,6 +43,7 @@ jobs:
             tests/test_task4_336_future_workflow_staged_review_v1.py \
             tests/test_task4_337_live_get_prewrite_boundary_review_v1.py \
             tests/test_task4_338_live_authenticated_readonly_preflight_v1.py \
+            tests/test_task4_339_failclosed_ruleset_diagnostic_v1.py \
             --junitxml=results/task4-338-junit.xml | tee results/task4-338-pytest.log
       - name: Exactly five authenticated GitHub GET (READ ONLY)
         shell: bash
@@ -64,8 +65,25 @@ jobs:
           assert d["future_writer_authorized"] is False
           assert d["provider_dispatch"]=="DENY"
           PY
-          sha256sum scripts/task4_338_live_authenticated_readonly_preflight_v1.py tests/test_task4_338_live_authenticated_readonly_preflight_v1.py contracts/TASK4_338_LIVE_AUTHENTICATED_READONLY_PREFLIGHT_V1.json \
-            results/task4-338-live-readonly-preflight.json > results/task4-338-file-sha256.txt
+      - name: Hash Task4 339 denied or successful read-only evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          if test -f results/task4-338-live-readonly-preflight.json; then
+            sha256sum scripts/task4_338_live_authenticated_readonly_preflight_v1.py \
+              tests/test_task4_338_live_authenticated_readonly_preflight_v1.py \
+              tests/test_task4_339_failclosed_ruleset_diagnostic_v1.py \
+              contracts/TASK4_338_LIVE_AUTHENTICATED_READONLY_PREFLIGHT_V1.json \
+              results/task4-338-live-readonly-preflight.json \
+              > results/task4-339-file-sha256.txt
+          else
+            echo "TASK4_339_NO_REPORT_EARLY_PRECONDITION_FAILURE" > results/task4-339-early-failclosed.txt
+            sha256sum scripts/task4_338_live_authenticated_readonly_preflight_v1.py \
+              tests/test_task4_339_failclosed_ruleset_diagnostic_v1.py \
+              > results/task4-339-file-sha256.txt
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
