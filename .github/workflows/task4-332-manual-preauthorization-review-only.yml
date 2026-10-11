@@ -1,4 +1,4 @@
-name: Task4 332 Manual Offline CAS Preauthorization Review (NO WRITE)
+name: Task4 334 Manual Offline 332 and 333 Review (NO WRITE)
 on:
   workflow_dispatch:
 
@@ -66,9 +66,36 @@ jobs:
             contracts/TASK4_332_REAL_CAS_APPROVAL_PREFLIGHT_V1.json \
             results/task4-332-preauthorization-offline-review.json \
             > results/task4-332-file-sha256.txt
+      - name: Test frozen Task4 333 GitHub read-only observation offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q -o addopts= tests/test_task4_333_github_readonly_prestate_review_v1.py \
+            --junitxml=results/task4-333-junit.xml | tee results/task4-333-pytest.log
+          python scripts/task4_333_github_readonly_prestate_review_only_v1.py \
+            results/task4-333-readonly-observation-review.json | tee results/task4-333-report.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("results/task4-333-readonly-observation-review.json")
+          d=json.loads(p.read_text())
+          sha=d.pop("report_sha256")
+          raw=json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()
+          assert hashlib.sha256(raw).hexdigest()==sha
+          assert d["git_ref_write_authorized"] is False
+          assert d["provider_dispatch"]=="DENY"
+          assert d["real_cas_proven"] is False
+          assert d["real_github_post_count"]==d["real_provider_post_count"]==0
+          assert d["preflight_must_be_repeated_at_runtime"] is True
+          print("TASK4_334_333_READONLY_OBSERVATION_NOT_AUTHORIZATION")
+          PY
+          sha256sum scripts/task4_333_github_readonly_prestate_review_only_v1.py \
+            tests/test_task4_333_github_readonly_prestate_review_v1.py \
+            contracts/TASK4_333_GITHUB_READONLY_OBSERVATION_V1.json \
+            results/task4-333-readonly-observation-review.json \
+            > results/task4-333-file-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: task4-332-offline-only-preauthorization-review
+          name: task4-334-offline-332-333-reviews-only
           path: results/*
           if-no-files-found: warn
