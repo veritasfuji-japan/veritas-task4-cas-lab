@@ -138,6 +138,32 @@ def exact_get_one(key,*,token,transport_factory=None):
     finally:
         if conn is not None:conn.close()
 
+def static_ruleset_drift_fields(body):
+    """Only allowlisted FIELD NAMES and presence labels, never response values.
+
+    Missing fields and changed security-critical fields both fail closed.
+    Deliberately do not treat missing bypass actors as a verified empty list.
+    """
+    expected={
+        "id":RULESET_ID,
+        "enforcement":"active",
+        "name":"task4-cas-proof-ref-protection",
+        "target":"branch",
+        "source_type":"Repository",
+        "updated_at":RULESET_UPDATED_AT,
+        "conditions":rules.expected_ruleset()["conditions"],
+        "rules":rules.expected_ruleset()["rules"]
+    }
+    if type(body) is not dict:
+        return ["ruleset:invalid"]
+    return [
+        name+(":missing" if name not in body else ":mismatch")
+        for name,want in expected.items()
+        if name not in body or
+           type(body[name]) is not type(want) or body[name]!=want
+    ]
+
+
 def evaluate(responses,*,expected_sha):
     need(type(responses) is dict and set(responses)==set(KEYS),
          "FIVE_EXACT_GET_RECEIPTS_REQUIRED")
@@ -160,14 +186,7 @@ def evaluate(responses,*,expected_sha):
     need(responses["target"]["body"].get("sha")==TARGET,
          "FROZEN_TARGET_COMMIT_INVALID")
     ruleset=responses["ruleset"]["body"]
-    need(ruleset.get("id")==RULESET_ID
-         and ruleset.get("enforcement")=="active"
-         and ruleset.get("name")=="task4-cas-proof-ref-protection"
-         and ruleset.get("target")=="branch"
-         and ruleset.get("source_type")=="Repository"
-         and ruleset.get("updated_at")==RULESET_UPDATED_AT
-         and ruleset.get("conditions")==rules.expected_ruleset()["conditions"]
-         and ruleset.get("rules")==rules.expected_ruleset()["rules"],
+    need(not static_ruleset_drift_fields(ruleset),
          "RULESET_STATIC_RULES_DRIFT")
     need(responses["candidate"]["body"].get("message")=="Not Found"
          and "ref" not in responses["candidate"]["body"]
@@ -219,16 +238,68 @@ def build_report(responses,*,head,env):
         "provider_dispatch":"DENY"
     }
 
+def failclosed_evidence(responses,*,head,env,reason):
+    """Produce a useful negative receipt with NO response body or token."""
+    allowed={
+        "FIVE_EXACT_GET_RECEIPTS_REQUIRED",
+        "REPOSITORY_IDENTITY_INVALID",
+        "MAIN_HEAD_NOT_RUN_PINNED",
+        "FROZEN_TARGET_COMMIT_INVALID",
+        "RULESET_STATIC_RULES_DRIFT",
+        "MISSING_REF_AMBIGUOUS",
+        "RULESET_BYPASS_NOT_EMPTY",
+        "CURRENT_ACTOR_CAN_BYPASS",
+        "GITHUB_GET_OVERSIZED",
+        "GITHUB_GET_INVALID_JSON",
+        "UNSCOPED_GET_KEY"
+    }
+    allowed.update("UNEXPECTED_GET_RESPONSE_"+k for k in KEYS)
+    allowed.update("GITHUB_GET_FAILED_CLOSED_"+k for k in KEYS)
+    code=reason if reason in allowed else "UNKNOWN_PREWRITE_DENIAL"
+    static_drift=(static_ruleset_drift_fields(
+        responses["ruleset"]["body"])
+        if code=="RULESET_STATIC_RULES_DRIFT"
+           and "ruleset" in responses else [])
+    return {
+        "rule_of_one":RULE,
+        "run_id":env["GITHUB_RUN_ID"],
+        "workflow_ref":env["GITHUB_WORKFLOW_REF"],
+        "head_sha":head,
+        "classification":"AUTHENTICATED_READONLY_PREFLIGHT_FAIL_CLOSED",
+        "verification_outcome":"FAIL_CLOSED",
+        "failure_code":code,
+        "ruleset_static_drift_fields":static_drift,
+        "source":"AUTHENTICATED_GITHUB_HOSTED_ACTIONS_GET",
+        "exact_get_paths":[parent.PATHS[k] for k in KEYS],
+        "http_statuses":{k:responses[k]["status"] for k in responses},
+        "body_sha256":{k:digest(responses[k]["body"]) for k in responses},
+        "actual_authenticated_get_count":len(responses),
+        "real_github_create_ref_post_count":0,
+        "real_provider_post_count":0,
+        "approval_token_persisted":False,
+        "read_response_body_persisted":False,
+        "github_write_permission_granted":False,
+        "future_writer_authorized":False,
+        "provider_dispatch":"DENY"
+    }
+
+
 def run(env,*,checkout_sha,transport_factory=None):
     contract=json.loads(CONTRACT.read_text(encoding="utf-8"))
     verify_contract(contract)
     head=verify_context(env,checkout_sha=checkout_sha)
     responses={}
-    # Hard finite five-item sequence, no retry and no POST implementation.
-    for key in KEYS:
-        responses[key]=exact_get_one(key,token=env["GH_TOKEN"],
-                                     transport_factory=transport_factory)
-    report=build_report(responses,head=head,env=env)
+    # Hard finite five-item GET sequence; absolutely NO retry or POST.
+    try:
+        for key in KEYS:
+            responses[key]=exact_get_one(key,token=env["GH_TOKEN"],
+                                         transport_factory=transport_factory)
+        report=build_report(responses,head=head,env=env)
+        report["verification_outcome"]="PASS_READONLY_ONLY"
+        report["failure_code"]=None
+        report["ruleset_static_drift_fields"]=[]
+    except Denied as exc:
+        report=failclosed_evidence(responses,head=head,env=env,reason=str(exc))
     report["report_sha256"]=digest(report)
     return report
 
@@ -242,6 +313,10 @@ def main(argv):
     r=run(dict(os.environ),checkout_sha=head)
     dest.parent.mkdir(parents=True,exist_ok=True)
     dest.write_text(json.dumps(r,sort_keys=True,indent=2)+"\n",encoding="utf-8")
+    if r["verification_outcome"]=="FAIL_CLOSED":
+        print("TASK4_339_READONLY_PREFLIGHT_FAIL_CLOSED")
+        print("TASK4_339_SAFE_FAILURE_CODE="+r["failure_code"])
+        raise SystemExit(1)
     print("TASK4_338_AUTHENTICATED_FIVE_REAL_GITHUB_GETS_COMPLETED_NO_WRITE")
     print("TASK4_338_CLASSIFICATION="+r["verdict"]["classification"])
 
