@@ -152,7 +152,7 @@ def test_inert_future_run_book_not_an_activated_writer():
     assert not (ROOT/".github/workflows/task4-331-real-ref-writer.yml").exists()
     doc=(ROOT/"docs/TASK4_331_CROSS_RUN_CAS_EVIDENCE_REVIEW_V1.md").read_text()
     assert "NOT AUTHORIZED" in doc
-    assert "distinct GitHub Actions" in doc
+    assert "distinct GitHub-hosted Actions" in doc
     assert "contents:write" in doc
 
 def test_contract_admits_synthetic_only_and_provider_deny():
