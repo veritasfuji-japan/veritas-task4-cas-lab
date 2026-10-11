@@ -105,16 +105,41 @@ def verify_source_gates():
         need(isinstance(node, ast.Constant) and type(node.value) is type(desired)
              and node.value == desired,"PARENT_SOURCE_GATE_DRIFT_"+name)
     workflows = sorted((ROOT/".github/workflows").glob("*.yml"))
-    need(len(workflows) == 4, "UNEXPECTED_WORKFLOW_COUNT_OR_EXTENSION")
+
+    # Task4 #338 is the ONLY newly added workflow: exclusively manual,
+    # globally contents:read, and ONE ephemeral github.token expression.
+    expected_workflows = {
+        "task4-329-readonly-manual-preflight.yml",
+        "task4-330-review-only-manual.yml",
+        "task4-331-offline-evidence-review-manual.yml",
+        "task4-332-manual-preauthorization-review-only.yml",
+        "task4-338-live-authenticated-readonly-preflight-manual.yml"
+    }
+    workflow_names = {p.name for p in workflows}
+    need(workflow_names == expected_workflows, "UNEXPECTED_WORKFLOW_NAME_OR_COUNT")
+    token_assignment = "GH_TOKEN: ${{ github.token }}"
     for workflow in workflows:
         body=workflow.read_text(encoding="utf-8")
         need("  workflow_dispatch:" in body and
              "permissions:\\n  contents: read".replace("\\n","\n") in body and
              "persist-credentials: false" in body,
              "WORKFLOW_NOT_MANUAL_READ_ONLY_"+workflow.name)
+        if workflow.name=="task4-338-live-authenticated-readonly-preflight-manual.yml":
+            need(body.count(token_assignment)==1
+                 and body.count("github.token")==1
+                 and "      contents: read" in body
+                 and "GITHUB_TOKEN:" not in body
+                 and 'github.actor == \'veritasfuji-japan\'' in body
+                 and 'github.run_attempt == 1' in body,
+                 "TASK4_338_SCOPED_GITHUB_READ_TOKEN_REQUIRED")
+            safe_body=body.replace(token_assignment,"TASK4_338_EPHEMERAL_READ_ONLY_TOKEN_PLACEHOLDER")
+        else:
+            need(token_assignment not in body and "github.token" not in body,
+                 "NO_TOKEN_ACCESS_IN_EXISTING_OFFLINE_WORKFLOWS")
+            safe_body=body
         for forbidden in ("contents: write","pull_request:","pull_request_target:",
                           "push:","secrets.","github.token","gh api --method POST"):
-            need(forbidden not in body, "UNEXPECTED_PRIVILEGED_WORKFLOW_"+workflow.name)
+            need(forbidden not in safe_body, "UNEXPECTED_PRIVILEGED_WORKFLOW_"+workflow.name)
     need(not list((ROOT/".github/workflows").glob("*.yaml")),
          "UNREVIEWED_YAML_WORKFLOW")
     return [w.name for w in workflows]

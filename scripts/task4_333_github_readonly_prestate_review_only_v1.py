@@ -89,18 +89,43 @@ def verify_gates():
         need(isinstance(node,ast.Constant) and type(node.value) is type(v)
              and node.value==v,"SOURCE_GATE_NOT_CLOSED_"+k)
     workflows=list((ROOT/".github/workflows").glob("*.yml"))
-    need(len(workflows)==4 and
-         not list((ROOT/".github/workflows").glob("*.yaml")),
-         "NO_ADDITIONAL_WORKFLOWS_ALLOWED_IN_333")
+
+    # Task4 #338 is the ONLY newly added workflow: exclusively manual,
+    # globally contents:read, and ONE ephemeral github.token expression.
+    expected_workflows = {
+        "task4-329-readonly-manual-preflight.yml",
+        "task4-330-review-only-manual.yml",
+        "task4-331-offline-evidence-review-manual.yml",
+        "task4-332-manual-preauthorization-review-only.yml",
+        "task4-338-live-authenticated-readonly-preflight-manual.yml"
+    }
+    workflow_names = {p.name for p in workflows}
+    need(workflow_names == expected_workflows, "UNEXPECTED_WORKFLOW_NAME_OR_COUNT")
+    token_assignment = "GH_TOKEN: ${{ github.token }}"
+    need(not list((ROOT/".github/workflows").glob("*.yaml")),
+         "NO_UNREVIEWED_YAML_WORKFLOWS")
     for workflow in workflows:
         raw=workflow.read_text(encoding="utf-8")
         need("\n  workflow_dispatch:" in raw and
              "\npermissions:\n  contents: read" in raw and
              "persist-credentials: false" in raw,
              "NO_UNREVIEWED_WORKFLOW_PERMISSION_"+workflow.name)
+        if workflow.name=="task4-338-live-authenticated-readonly-preflight-manual.yml":
+            need(raw.count(token_assignment)==1
+                 and raw.count("github.token")==1
+                 and "      contents: read" in raw
+                 and "GITHUB_TOKEN:" not in raw
+                 and 'github.actor == \'veritasfuji-japan\'' in raw
+                 and 'github.run_attempt == 1' in raw,
+                 "TASK4_338_SCOPED_GITHUB_READ_TOKEN_REQUIRED")
+            safe_raw=raw.replace(token_assignment,"TASK4_338_READ_ONLY_TOKEN_PLACEHOLDER")
+        else:
+            need(token_assignment not in raw and "github.token" not in raw,
+                 "NO_GITHUB_CONTEXT_TOKEN_IN_OFFLINE_WORKFLOWS")
+            safe_raw=raw
         for forbidden in ("contents: write","pull_request:","pull_request_target:",
                           "push:","secrets.","github.token","gh api --method POST"):
-            need(forbidden not in raw,"FORBIDDEN_WORKFLOW_PRIMITIVE_"+workflow.name)
+            need(forbidden not in safe_raw,"FORBIDDEN_WORKFLOW_PRIMITIVE_"+workflow.name)
     return True
 
 def review():

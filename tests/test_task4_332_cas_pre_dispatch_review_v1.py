@@ -68,7 +68,8 @@ def test_added_or_missing_fields_denied():
 
 def test_parent_source_hard_gates_closed_and_no_writer_workflows():
     names=m.verify_source_gates()
-    assert len(names)==4
+    assert len(names)==5
+    assert "task4-338-live-authenticated-readonly-preflight-manual.yml" in names
     assert "task4-332-manual-preauthorization-review-only.yml" in names
 
 def test_no_network_from_review_logic(monkeypatch):
