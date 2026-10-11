@@ -1,4 +1,4 @@
-name: Task4 336 Manual Offline 332 333 335 336 Review (NO WRITE)
+name: Task4 337 Manual Offline 332 333 335 336 337 Review (NO WRITE)
 on:
   workflow_dispatch:
 
@@ -144,9 +144,33 @@ jobs:
             docs/templates/task4-336-four-role-create-ref-STAGED-NOT-INSTALLED.yml \
             results/task4-336-staged-workflow-review.json \
             > results/task4-336-file-sha256.txt
+      - name: Review Task4 337 exact GitHub GET prewrite boundary (OFFLINE)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q -o addopts= tests/test_task4_337_live_get_prewrite_boundary_review_v1.py \
+            --junitxml=results/task4-337-junit.xml | tee results/task4-337-pytest.log
+          python scripts/task4_337_live_get_prewrite_boundary_review_only_v1.py \
+            results/task4-337-five-get-prewrite-offline-review.json | tee results/task4-337-report.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          d=json.loads(pathlib.Path("results/task4-337-five-get-prewrite-offline-review.json").read_text())
+          h=d.pop("report_sha256")
+          check=hashlib.sha256(json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()).hexdigest()
+          assert check==h
+          assert d["real_github_get_count"]==d["real_github_post_count"]==d["real_provider_post_count"]==0
+          assert d["write_authorized"] is False and d["verdict"]["write_authorized"] is False
+          assert d["provider_dispatch"]=="DENY"
+          print("TASK4_337_FIVE_GET_PREFLIGHT_SHAPE_ONLY_REAL_WRITE_DENIED")
+          PY
+          sha256sum scripts/task4_337_live_get_prewrite_boundary_review_only_v1.py \
+            tests/test_task4_337_live_get_prewrite_boundary_review_v1.py \
+            contracts/TASK4_337_GITHUB_FIVE_GET_PREWRITE_BOUNDARY_REVIEW_V1.json \
+            results/task4-337-five-get-prewrite-offline-review.json \
+            > results/task4-337-file-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: task4-336-offline-332-333-335-336-reviews-only
+          name: task4-337-offline-332-333-335-336-337-reviews-only
           path: results/*
           if-no-files-found: warn

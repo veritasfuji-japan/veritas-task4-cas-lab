@@ -1,0 +1,51 @@
+{
+  "schema": "veritas.task4.real-github-get-prewrite-boundary-review-only.v1",
+  "rule_of_one": "TASK4_337_FIVE_EXACT_GET_PREFLIGHT_FAIL_CLOSED_WITHOUT_POST_AUTHORIZATION",
+  "reviewed_main_sha": "03cc2f9f340605c32f16fd328ac18389fe64639b",
+  "repository_full_name": "veritasfuji-japan/veritas-task4-cas-lab",
+  "repository_id": 1414228001,
+  "repository_visibility": "public",
+  "repository_default_branch": "main",
+  "candidate_ref": "refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73",
+  "target_commit": "9edd28eee24da559fc0ad24fd97291944acc2ed4",
+  "ruleset_id": 24880024,
+  "ruleset_updated_at": "2026-10-11T22:00:45.379+09:00",
+  "github_api_host": "api.github.com",
+  "api_paths": {
+    "repository": "/repos/veritasfuji-japan/veritas-task4-cas-lab",
+    "main": "/repos/veritasfuji-japan/veritas-task4-cas-lab/commits/main",
+    "target": "/repos/veritasfuji-japan/veritas-task4-cas-lab/git/commits/9edd28eee24da559fc0ad24fd97291944acc2ed4",
+    "ruleset": "/repos/veritasfuji-japan/veritas-task4-cas-lab/rulesets/24880024",
+    "candidate": "/repos/veritasfuji-japan/veritas-task4-cas-lab/git/ref/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73"
+  },
+  "api_method": "GET",
+  "expected_http_statuses": {
+    "repository": 200,
+    "main": 200,
+    "target": 200,
+    "ruleset": 200,
+    "candidate": 404
+  },
+  "observed_protection_rules": [
+    "deletion",
+    "non_fast_forward",
+    "update"
+  ],
+  "observed_bypass_actors": [],
+  "live_readonly_network_gate": false,
+  "live_create_ref_write_gate": false,
+  "separately_approved_workflow_sha": null,
+  "signed_owner_approval_reference": null,
+  "authorized_workflow_installed": false,
+  "role_a_b_writer_attempts_executed": 0,
+  "actual_github_get_count": 0,
+  "actual_github_post_count": 0,
+  "actual_provider_post_count": 0,
+  "current_run_identity_attested": false,
+  "candidate_absence_attested_for_future_runtime": false,
+  "github_actions_final_writer_sha_frozen": false,
+  "proof_class": "SYNTHETIC_OFFLINE_GET_REPLIES_ONLY",
+  "provider_dispatch": "DENY",
+  "real_cross_run_cas_proven": false,
+  "status": "PREWRITE_REVIEW_ONLY_NEVER_AUTHORIZES_CREATE_REF"
+}
