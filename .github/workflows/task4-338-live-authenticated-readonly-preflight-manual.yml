@@ -36,7 +36,13 @@ jobs:
           mkdir -p results
           test "$(git rev-parse HEAD)" = "${{ github.sha }}"
           python -m pip install --disable-pip-version-check "pytest==9.1.1"
-          python -m pytest -q -o addopts= tests/test_task4_338_live_authenticated_readonly_preflight_v1.py \
+          python -m pytest -q -o addopts= \
+            tests/test_task4_332_cas_pre_dispatch_review_v1.py \
+            tests/test_task4_333_github_readonly_prestate_review_v1.py \
+            tests/test_task4_335_ruleset_prewrite_candidate_review_v1.py \
+            tests/test_task4_336_future_workflow_staged_review_v1.py \
+            tests/test_task4_337_live_get_prewrite_boundary_review_v1.py \
+            tests/test_task4_338_live_authenticated_readonly_preflight_v1.py \
             --junitxml=results/task4-338-junit.xml | tee results/task4-338-pytest.log
       - name: Exactly five authenticated GitHub GET (READ ONLY)
         shell: bash
