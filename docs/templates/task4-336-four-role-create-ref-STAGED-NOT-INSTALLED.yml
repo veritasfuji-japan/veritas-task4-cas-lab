@@ -1,0 +1,74 @@
+# TASK4 #336 — STAGED FUTURE DESIGN. NOT INSTALLED IN .github/workflows.
+# DO NOT MOVE OR ACTIVATE WITHOUT A NEW EXPLICIT, SHA-SCOPED OWNER APPROVAL.
+# Every job has a literal false gate AND every step is a refusal-only placeholder.
+# Intended destination after separate approval: .github/workflows/task4-330-authorized-create-ref.yml
+# Fixed candidate ref: refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73
+# Fixed target commit: 9edd28eee24da559fc0ad24fd97291944acc2ed4
+# GitHub repo-scoped contents:write is NOT a one-ref-limited token.
+# A and B need DISTINCT workflow_run/job IDs; job concurrency must NOT serialize them.
+# Two independent runs do not prove a race without actual temporal overlap evidence.
+name: FUTURE Task4 336 Four Role GitHub CreateRef (UNINSTALLED INERT DESIGN)
+on:
+  workflow_dispatch:
+    inputs:
+      role:
+        description: "Future experiment role; NO action enabled in this template"
+        required: true
+        type: choice
+        options:
+          - PREFLIGHT
+          - A
+          - B
+          - C
+
+permissions:
+  contents: read
+
+jobs:
+  readonly-preflight:
+    if: ${{ false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: No PRECHECK action authorized
+        shell: bash
+        run: |
+          echo "TASK4_336_STAGED_ONLY_NO_ACTUAL_READ_PREFLIGHT"
+          exit 78
+
+  writer-once:
+    if: ${{ false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: No CreateRef write authorized
+        shell: bash
+        run: |
+          echo "TASK4_336_STAGED_ONLY_GITHUB_WRITER_NEVER_CALLS_API"
+          exit 78
+
+  readonly-audit:
+    if: ${{ false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: No auditor action authorized
+        shell: bash
+        run: |
+          echo "TASK4_336_STAGED_ONLY_NO_ACTUAL_AUDIT"
+          exit 78
