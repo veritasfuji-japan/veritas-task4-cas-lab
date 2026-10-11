@@ -1,0 +1,83 @@
+name: Task4 331 Manual Offline A/B/C Receipt Review (NO GitHub Write)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-independent-runs-receipt-audit:
+    if: github.repository == 'veritasfuji-japan/veritas-task4-cas-lab' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      GITHUB_TOKEN: ""
+      GH_TOKEN: ""
+      OPENAI_API_KEY: ""
+      TASK4_OPENAI_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      OPENAI_BASE_URL: ""
+      VERITAS_DATABASE_URL: ""
+      PYTHONNOUSERSITE: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11.16"
+      - name: Check exact checked out SHA and no privileged GitHub or Provider context
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          test "${{ github.repository }}" = "veritasfuji-japan/veritas-task4-cas-lab"
+          test "${{ github.ref }}" = "refs/heads/main"
+          echo "${{ github.sha }}" > results/task4-331-expected-head-sha.txt
+          git rev-parse HEAD > results/task4-331-actual-head-sha.txt
+          test "$(cat results/task4-331-expected-head-sha.txt)" = "$(cat results/task4-331-actual-head-sha.txt)"
+          for key in GITHUB_TOKEN GH_TOKEN OPENAI_API_KEY TASK4_OPENAI_API_KEY ANTHROPIC_API_KEY OPENAI_BASE_URL VERITAS_DATABASE_URL; do
+            test -z "${!key:-}"
+          done
+      - name: Strict offline A/B/C provenance and denial tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "pytest==9.1.1"
+          python -m pytest -q -o addopts= tests/test_task4_331_cross_run_cas_evidence_review_v1.py \
+            --junitxml=results/task4-331-junit.xml | tee results/task4-331-pytest.log
+          python scripts/task4_331_cross_run_cas_receipt_arbiter_offline_v1.py \
+            results/task4-331-offline-ab-c-receipt-report.json \
+            | tee results/task4-331-report.log
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          obj=json.loads(Path("results/task4-331-offline-ab-c-receipt-report.json").read_text())
+          reported=obj.pop("report_sha256")
+          actual=hashlib.sha256(json.dumps(obj,sort_keys=True,ensure_ascii=False,
+                          separators=(",",":"),allow_nan=False).encode()).hexdigest()
+          assert reported==actual
+          verdict=obj["validator_result"]
+          assert verdict["synthetic_receipts_validated"]==4
+          assert verdict["simulated_create_201"]==1
+          assert verdict["simulated_duplicate_422"]==1
+          assert verdict["real_github_cross_run_cas_proven"] is False
+          assert verdict["real_github_ref_writes"]==verdict["provider_posts"]==0
+          assert obj["real_github_dispatch"] is False
+          assert obj["real_provider_dispatch"] is False
+          print("TASK4_331_SYNTHETIC_RECEIPT_AUDIT_ONLY_NO_REAL_REF_WRITE")
+          PY
+          sha256sum scripts/task4_331_cross_run_cas_receipt_arbiter_offline_v1.py \
+            tests/test_task4_331_cross_run_cas_evidence_review_v1.py \
+            contracts/TASK4_331_SYNTHETIC_CROSS_RUN_EVIDENCE_V1.json \
+            results/task4-331-offline-ab-c-receipt-report.json \
+            > results/task4-331-file-sha256.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: task4-331-synthetic-only-cross-run-cas-receipts
+          path: results/*
+          if-no-files-found: warn
