@@ -1,0 +1,81 @@
+name: Task4 329 Manual Readonly Lab Preflight (NO GitHub CAS Writes)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readonly-lab-preflight:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      OPENAI_API_KEY: ""
+      TASK4_OPENAI_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      OPENAI_BASE_URL: ""
+      VERITAS_DATABASE_URL: ""
+      GITHUB_TOKEN: ""
+      GH_TOKEN: ""
+      PYTHONNOUSERSITE: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11.16"
+      - name: Verify main-only exact checked-out SHA and empty external keys
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          test "${{ github.ref }}" = "refs/heads/main"
+          git rev-parse HEAD > results/task4-329-actual-head.txt
+          echo "${{ github.sha }}" > results/task4-329-expected-head.txt
+          test "$(cat results/task4-329-actual-head.txt)" = "$(cat results/task4-329-expected-head.txt)"
+          for k in GITHUB_TOKEN GH_TOKEN OPENAI_API_KEY TASK4_OPENAI_API_KEY ANTHROPIC_API_KEY OPENAI_BASE_URL VERITAS_DATABASE_URL; do
+            test -z "${!k:-}"
+          done
+      - name: Run isolated offline-only plan and negative-test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "pytest==9.1.1"
+          python -m pytest -q -o addopts= tests/test_task4_329_readonly_preflight_v1.py \
+            --junitxml=results/task4-329-junit.xml \
+            | tee results/task4-329-pytest.log
+          python scripts/task4_329_readonly_preflight_v1.py \
+            --ref "refs/heads/main" \
+            --head-sha "$(git rev-parse HEAD)" \
+            --output results/task4-329-readonly-plan.json \
+            | tee results/task4-329-plan.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("results/task4-329-readonly-plan.json")
+          d=json.loads(p.read_text())
+          digest=d.pop("report_sha256")
+          raw=json.dumps(d,sort_keys=True,ensure_ascii=False,
+              separators=(",",":"),allow_nan=False).encode()
+          assert hashlib.sha256(raw).hexdigest()==digest
+          assert d["actual_github_ref_writes"]==d["actual_github_api_calls"]==0
+          assert d["real_git_ref_cas_proven"] is False
+          assert d["billing_free_private_actions_minutes_verified"] is False
+          assert d["real_provider_dispatch"]=="DENY"
+          print("TASK4_329_READ_ONLY_MANUAL_NO_GITHUB_REF_MUTATION")
+          PY
+          sha256sum scripts/task4_329_readonly_preflight_v1.py \
+            tests/test_task4_329_readonly_preflight_v1.py \
+            contracts/TASK4_329_READONLY_LAB_PREFLIGHT_V1.json \
+            results/task4-329-readonly-plan.json \
+            > results/task4-329-file-sha256.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: task4-329-manual-readonly-lab-preflight-v1
+          path: results/*
+          if-no-files-found: warn
