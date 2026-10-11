@@ -16,6 +16,9 @@ from pathlib import Path
 import re
 import sys
 
+ROOT=Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0,str(ROOT))
 from scripts import task4_330_github_create_ref_candidate_review_only_v1 as parent
 
 RULE="TASK4_331_THREE_INDEPENDENT_GITHUB_RUN_RECEIPT_REVIEW_OFFLINE_V1"
