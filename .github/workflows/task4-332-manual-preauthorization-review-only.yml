@@ -1,0 +1,74 @@
+name: Task4 332 Manual Offline CAS Preauthorization Review (NO WRITE)
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-only-no-write:
+    if: github.repository == 'veritasfuji-japan/veritas-task4-cas-lab' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      GITHUB_TOKEN: ""
+      GH_TOKEN: ""
+      OPENAI_API_KEY: ""
+      TASK4_OPENAI_API_KEY: ""
+      ANTHROPIC_API_KEY: ""
+      OPENAI_BASE_URL: ""
+      VERITAS_DATABASE_URL: ""
+      PYTHONNOUSERSITE: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11.16"
+      - name: Verify exact main SHA and blank external credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p results
+          git rev-parse HEAD > results/task4-332-actual-head-sha.txt
+          echo "${{ github.sha }}" > results/task4-332-expected-head-sha.txt
+          test "$(cat results/task4-332-actual-head-sha.txt)" = "$(cat results/task4-332-expected-head-sha.txt)"
+          for key in GITHUB_TOKEN GH_TOKEN OPENAI_API_KEY TASK4_OPENAI_API_KEY ANTHROPIC_API_KEY OPENAI_BASE_URL VERITAS_DATABASE_URL; do
+            test -z "${!key:-}"
+          done
+      - name: Test frozen approval DENY state offline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check "pytest==9.1.1"
+          python -m pytest -q -o addopts= tests/test_task4_332_cas_pre_dispatch_review_v1.py \
+            --junitxml=results/task4-332-junit.xml | tee results/task4-332-pytest.log
+          python scripts/task4_332_cas_pre_dispatch_authorization_review_only_v1.py \
+            results/task4-332-preauthorization-offline-review.json | tee results/task4-332-report.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("results/task4-332-preauthorization-offline-review.json")
+          d=json.loads(p.read_text())
+          sha=d.pop("report_sha256")
+          raw=json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()
+          assert hashlib.sha256(raw).hexdigest()==sha
+          assert d["real_github_write_authorized"] is False
+          assert d["provider_dispatch"]=="DENY"
+          assert d["actual_git_ref_create_post_count"]==d["actual_provider_post_count"]==0
+          print("TASK4_332_OFFLINE_REVIEW_ONLY_NOT_AUTHORIZED")
+          PY
+          sha256sum scripts/task4_332_cas_pre_dispatch_authorization_review_only_v1.py \
+            tests/test_task4_332_cas_pre_dispatch_review_v1.py \
+            contracts/TASK4_332_REAL_CAS_APPROVAL_PREFLIGHT_V1.json \
+            results/task4-332-preauthorization-offline-review.json \
+            > results/task4-332-file-sha256.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: task4-332-offline-only-preauthorization-review
+          path: results/*
+          if-no-files-found: warn
