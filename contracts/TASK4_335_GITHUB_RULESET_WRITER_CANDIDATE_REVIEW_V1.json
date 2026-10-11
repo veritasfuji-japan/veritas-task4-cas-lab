@@ -1,0 +1,69 @@
+{
+  "schema": "veritas.task4.github-create-ref-reviewed-plan-only.v1",
+  "rule_of_one": "TASK4_335_EXACT_RULESET_PREWRITE_GATE_DENIES_UNREVIEWED_CHANGE_V1",
+  "source_main_sha": "acdb15defa5781ffe64d4ae7b2629640abe4812c",
+  "lab_repository": "veritasfuji-japan/veritas-task4-cas-lab",
+  "visibility_at_review": "public",
+  "exact_trial_ref": "refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73",
+  "fixed_existing_target_commit": "9edd28eee24da559fc0ad24fd97291944acc2ed4",
+  "read_only_observed_ref_status": 404,
+  "ruleset_api_url": "https://api.github.com/repos/veritasfuji-japan/veritas-task4-cas-lab/rulesets/24880024",
+  "ruleset": {
+    "id": 24880024,
+    "name": "task4-cas-proof-ref-protection",
+    "target": "branch",
+    "source_type": "Repository",
+    "enforcement": "active",
+    "conditions": {
+      "ref_name": {
+        "exclude": [],
+        "include": [
+          "refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73"
+        ]
+      }
+    },
+    "bypass_actors": [],
+    "rules": [
+      {
+        "type": "deletion"
+      },
+      {
+        "type": "non_fast_forward"
+      },
+      {
+        "type": "update"
+      }
+    ],
+    "current_user_can_bypass": "never",
+    "updated_at": "2026-10-11T22:00:45.379+09:00"
+  },
+  "future_roles": [
+    "PREFLIGHT",
+    "A",
+    "B",
+    "C"
+  ],
+  "future_total_runs_cap": 4,
+  "future_create_post_cap": 2,
+  "future_create_post_per_writer_cap": 1,
+  "future_retries_cap": 0,
+  "role_a_b_distinct_runners_required": true,
+  "planned_max_runner_minutes_per_run": 8,
+  "planned_runner_minutes_total": 32,
+  "future_writer_workflow_path": ".github/workflows/task4-330-authorized-create-ref.yml",
+  "exact_approved_writer_head_sha": null,
+  "new_owner_github_ref_write_consent": false,
+  "actual_github_post_count": 0,
+  "actual_provider_post_count": 0,
+  "real_github_cas_proven": false,
+  "independent_admin_irrevocability_proven": false,
+  "ruleset_mutation_prohibited_without_new_review": true,
+  "source_gate_enabled": false,
+  "writer_workflow_installed": false,
+  "provider_dispatch": "DENY",
+  "predecessor_334_run_id": "38140366944",
+  "predecessor_334_job_id": "114472823935",
+  "predecessor_334_artifact_id": "11702966070",
+  "predecessor_334_artifact_zip_sha256": "0a77ca0f7ca3d7d18db57db9b5ee1d37003e07b510b31f92f410a293452d8c38",
+  "classification": "EXACT_RULESET_SNAPSHOT_VALID_FOR_REVIEW_NOT_LIVE_ATTESTATION_OR_AUTHORIZATION"
+}
