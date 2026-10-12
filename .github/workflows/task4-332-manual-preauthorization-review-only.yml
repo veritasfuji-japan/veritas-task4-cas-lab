@@ -1,4 +1,4 @@
-name: Task4 337 Manual Offline 332 333 335 336 337 Review (NO WRITE)
+name: Task4 341 Manual Offline Preauthorization and Bypass Snapshot Review (NO WRITE)
 on:
   workflow_dispatch:
 
@@ -168,9 +168,38 @@ jobs:
             contracts/TASK4_337_GITHUB_FIVE_GET_PREWRITE_BOUNDARY_REVIEW_V1.json \
             results/task4-337-five-get-prewrite-offline-review.json \
             > results/task4-337-file-sha256.txt
+      - name: Review Task4 341 separate-read Ruleset bypass evidence (OFFLINE ONLY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q -o addopts= tests/test_task4_341_separate_read_bypass_evidence_review_v1.py \
+            --junitxml=results/task4-341-junit.xml | tee results/task4-341-pytest.log
+          python scripts/task4_341_separate_read_bypass_evidence_review_only_v1.py \
+            results/task4-341-separate-read-bypass-offline-review.json | tee results/task4-341-report.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("results/task4-341-separate-read-bypass-offline-review.json")
+          d=json.loads(p.read_text())
+          h=d.pop("report_sha256")
+          raw=json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()
+          assert hashlib.sha256(raw).hexdigest()==h
+          assert d["write_authorized"] is False
+          assert d["bypass_at_original_actions_run_proven"] is False
+          assert d["independent_signed_observer_attested"] is False
+          assert d["actual_github_get_count_in_this_review"]==0
+          assert d["actual_github_write_count_in_this_review"]==0
+          assert d["actual_provider_post_count_in_this_review"]==0
+          assert d["provider_dispatch"]=="DENY"
+          print("TASK4_341_BYPASS_SEPARATE_SNAPSHOT_NOT_RUNTIME_AUTHORITY")
+          PY
+          sha256sum scripts/task4_341_separate_read_bypass_evidence_review_only_v1.py \
+            tests/test_task4_341_separate_read_bypass_evidence_review_v1.py \
+            contracts/TASK4_341_SEPARATE_READ_BYPASS_EVIDENCE_FREEZE_V1.json \
+            results/task4-341-separate-read-bypass-offline-review.json \
+            > results/task4-341-file-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: task4-337-offline-332-333-335-336-337-reviews-only
+          name: task4-341-offline-separate-bypass-snapshot-review-only
           path: results/*
           if-no-files-found: warn
