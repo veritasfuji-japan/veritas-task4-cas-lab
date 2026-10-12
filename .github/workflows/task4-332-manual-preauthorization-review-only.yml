@@ -1,4 +1,4 @@
-name: Task4 342 Manual Offline CAS Approval and Audit Review (NO WRITE)
+name: Task4 343 Manual Offline Independent Audit Protocol Review (NO WRITE)
 on:
   workflow_dispatch:
 
@@ -229,9 +229,41 @@ jobs:
             contracts/TASK4_342_REAL_CAS_FINAL_APPROVAL_AUDIT_REVIEW_ONLY_V1.json \
             results/task4-342-final-cas-approval-audit-review-only.json \
             > results/task4-342-file-sha256.txt
+      - name: Review Task4 343 independent read-only audit protocol (OFFLINE ONLY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q -o addopts= tests/test_task4_343_independent_readonly_audit_review_v1.py \
+            --junitxml=results/task4-343-junit.xml | tee results/task4-343-pytest.log
+          python scripts/task4_343_independent_readonly_audit_review_only_v1.py \
+            results/task4-343-independent-readonly-audit-design-review-only.json | tee results/task4-343-report.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("results/task4-343-independent-readonly-audit-design-review-only.json")
+          d=json.loads(p.read_text())
+          h=d.pop("report_sha256")
+          raw=json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()
+          assert hashlib.sha256(raw).hexdigest()==h
+          assert d["manifest_sha256"]=="fe38243f3152980aa62c09bc3e94f3c319be3ca91f1a8063d071ecadaaaca735"
+          assert d["independent_observer_connected"] is False
+          assert d["trust_root_public_key_pinned"] is False
+          assert d["real_signed_receipts_observed"]==0
+          assert d["same_run_signed_ruleset_bypass_attested"] is False
+          assert d["github_write_authorized"] is False
+          assert d["real_github_get_count_in_this_review"]==0
+          assert d["real_github_create_ref_posts_in_this_review"]==0
+          assert d["real_provider_posts_in_this_review"]==0
+          assert d["provider_dispatch"]=="DENY"
+          print("TASK4_343_INDEPENDENT_READONLY_AUDIT_DESIGN_ONLY_NOT_SIGNED_RUNTIME_PROOF")
+          PY
+          sha256sum scripts/task4_343_independent_readonly_audit_review_only_v1.py \
+            tests/test_task4_343_independent_readonly_audit_review_v1.py \
+            contracts/TASK4_343_INDEPENDENT_READONLY_AUDIT_PROTOCOL_REVIEW_V1.json \
+            results/task4-343-independent-readonly-audit-design-review-only.json \
+            > results/task4-343-file-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: task4-342-offline-cas-approval-and-independent-audit-review-only
+          name: task4-343-offline-independent-audit-protocol-review-only
           path: results/*
           if-no-files-found: warn
