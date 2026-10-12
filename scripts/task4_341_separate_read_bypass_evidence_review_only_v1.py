@@ -77,7 +77,7 @@ def verify(data):
          "FROZEN_RUN_CANONICAL_SHA_REQUIRED")
     unsigned={k:v for k,v in r.items() if k!="report_sha256"}
     need(digest(unsigned)==CANONICAL_SHA,"RUN_REPORT_CANONICAL_DIGEST_CHANGED")
-    exact_render=(json.dumps(r,indent=2,sort_keys=True,ensure_ascii=True)+"\\n").encode("utf-8")
+    exact_render=(json.dumps(r,indent=2,sort_keys=True,ensure_ascii=True)+"\n").encode("utf-8")
     need(sha_bytes(exact_render)==REPORT_SHA,
          "EXACT_RUN_REPORT_FILE_BYTES_DIFFER")
     expected_report={
@@ -227,6 +227,6 @@ def main(argv):
          and not dest.exists(),"ONLY_FRESH_FIXED_OFFLINE_RESULT_ALLOWED")
     result=review()
     dest.parent.mkdir(parents=True,exist_ok=True)
-    dest.write_text(json.dumps(result,sort_keys=True,indent=2)+"\\n",encoding="utf-8")
+    dest.write_text(json.dumps(result,sort_keys=True,indent=2)+"\n",encoding="utf-8")
     print("TASK4_341_TWO_READ_PATHS_SNAPSHOT_ONLY_BYPASS_NOT_RUNTIME_PROVEN")
 if __name__=="__main__": main(sys.argv)
