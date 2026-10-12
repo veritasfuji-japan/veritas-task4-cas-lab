@@ -129,7 +129,7 @@ def test_no_network_no_provider_and_no_real_writer(monkeypatch):
     monkeypatch.setattr(socket.socket,"connect_ex",reject)
     assert m.review()["write_authorized"] is False
     with pytest.raises(m.writer.Denied):
-        m.writer.real_create_ref_once(role="A",token="fake")
+        m.writer.real_create_ref_once_under_future_authorization(env={})
 
 def test_only_exact_new_output_filename(tmp_path,monkeypatch):
     monkeypatch.setattr(m,"ROOT",tmp_path)
