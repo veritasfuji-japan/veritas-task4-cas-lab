@@ -1,0 +1,130 @@
+{
+  "schema": "veritas.task4.real-github-cross-run-cas-final-approval-and-audit-review-only.v1",
+  "rule_of_one": "TASK4_342_REAL_CAS_FINAL_APPROVAL_AND_INDEPENDENT_AUDIT_PLAN_NOT_AUTHORIZATION",
+  "repository": "veritasfuji-japan/veritas-task4-cas-lab",
+  "repository_id": 1414228001,
+  "visibility": "public",
+  "source_main_at_review": "f48021f737a66f119569ac586f8d6ad4b1de34d9",
+  "predecessor_evidence": {
+    "task4_340_run_id": 38186765875,
+    "task4_340_job_id": 114610648509,
+    "task4_340_artifact_id": 11719338461,
+    "task4_340_artifact_zip_sha256": "51e4af5d773b2c158cc128b45b1bb2501980d84c6e10b37aae4526be0c550a34",
+    "task4_340_source_head_sha": "cd1d137da8af98620ddd59f9adc1bee889128955",
+    "task4_341_run_id": 38187628606,
+    "task4_341_job_id": 114613290354,
+    "task4_341_artifact_id": 11719839558,
+    "task4_341_artifact_zip_sha256": "26746b9f9c4271a56210749306d12619e1ce46588318060591ecfc3f58e5d0ae",
+    "task4_341_source_head_sha": "f48021f737a66f119569ac586f8d6ad4b1de34d9",
+    "task4_341_junit_passed": 261,
+    "bypass_at_340_run_proven": false,
+    "independent_runtime_bypass_signed_attestation_present": false
+  },
+  "trial": {
+    "ref": "refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73",
+    "existing_target_commit_sha": "9edd28eee24da559fc0ad24fd97291944acc2ed4",
+    "protected_ruleset_id": 24880024,
+    "ruleset_updated_at": "2026-10-11T22:00:45.379+09:00",
+    "required_rules": [
+      "deletion",
+      "non_fast_forward",
+      "update"
+    ],
+    "required_bypass_actors": [],
+    "required_current_user_can_bypass": "never",
+    "ruleset_not_admin_irrevocable": true,
+    "candidate_ref_404_at_separate_review": true,
+    "candidate_ref_absent_at_future_dispatch_unproven": true
+  },
+  "planned_writer_workflow": ".github/workflows/task4-330-authorized-create-ref.yml",
+  "explicit_separate_owner_consent": {
+    "approved": false,
+    "approval_record_id": null,
+    "approval_record_sha256": null,
+    "approved_exact_writer_workflow_head_sha": null,
+    "approved_actor": null,
+    "approved_repo_ref_target_tuple": null,
+    "approval_expires_at": null,
+    "approved_github_write_token_scope": null,
+    "approved_billing_max_usd": null,
+    "previous_api_or_pr_approval_reused": false,
+    "merge_or_ci_success_never_authorization": true
+  },
+  "four_role_experiment_plan": {
+    "roles": [
+      "PREFLIGHT",
+      "A",
+      "B",
+      "C"
+    ],
+    "max_total_workflow_runs": 4,
+    "max_total_create_ref_posts": 2,
+    "max_posts_per_writer_role": 1,
+    "max_retries": 0,
+    "max_manual_replays": 0,
+    "max_minutes_per_run": 8,
+    "max_aggregate_runner_minutes": 32,
+    "concurrent_writers_require_distinct_runs": true,
+    "concurrent_writers_require_distinct_jobs": true,
+    "concurrent_writers_require_separate_ephemeral_credentials": true,
+    "cross_run_temporal_overlap_must_be_observed": true,
+    "estimated_runtime_cost_not_authorized": true,
+    "writer_roles": [
+      "A",
+      "B"
+    ],
+    "nonwriting_roles": [
+      "PREFLIGHT",
+      "C"
+    ]
+  },
+  "dispatch_gates_required": [
+    "SEPARATE_EXPLICIT_OWNER_APPROVAL_WITH_EXACT_WORKFLOW_HEAD_SHA_AND_REPO_REF_TARGET",
+    "APPROVED_PERMISSIONS_AND_COST_CEILING_EXPLICIT_WITH_EXPIRY",
+    "RECHECK_MAIN_AND_RUN_WORKFLOW_HEAD_AND_SINGLE_ATTEMPT",
+    "INDEPENDENT_RULESET_SCOPE_AND_BYPASS_AT_RUNTIME",
+    "RECHECK_REF_NONEXISTENCE_BEFORE_EACH_WRITE_WITH_NO_ASSUMPTIONS",
+    "FRESH_APPROVAL_BOUND_TO_OBSERVED_RULESET_AND_REF_SNAPSHOT",
+    "SEPARATE_EPHEMERAL_WRITER_RUN_CREDENTIALS_AND_FINITE_ATTEMPTS",
+    "NO_PROVIDER_SECRETS_OR_EXTERNAL_EFFECTS",
+    "STOP_IF_ADMIN_RULESET_MUTATION_OR_BYPASS_VISIBILITY_GAP",
+    "AUTHORITY_AT_EXECUTION_NOT_INFERRED_FROM_ISSUANCE"
+  ],
+  "required_independent_audit_evidence": [
+    "REAL_RUN_JOB_IDS_HEAD_SHAS_AND_WORKFLOW_BLOB_SHAS",
+    "PER_RUN_JOB_STARTED_AND_COMPLETED_TIMESTAMPS",
+    "PER_WRITER_PRE_GET_HTTP_STATUSES_AND_BODY_SHA256",
+    "PER_WRITER_SINGLE_POST_EXACT_REF_AND_TARGET_REQUEST_BODY_SHA256",
+    "PER_WRITER_SERVER_HTTP_STATUS_RESPONSE_DIGEST_AND_ACCEPTED_REF_SHA",
+    "SERVER_SIDE_REF_STATE_READ_BY_DISTINCT_AUDIT_CREDENTIAL",
+    "SIGNED_INDEPENDENT_RULESET_BYPASS_SNAPSHOT_AT_EXECUTION_OR_MARK_UNPROVEN",
+    "POST_START_END_WINDOWS_WITH_CROSS_RUN_OVERLAP_INDEPENDENTLY_CORROBORATED",
+    "TOTAL_REAL_POSTS_TOKENS_RUN_ATTEMPTS_AND_RETRIES_ACCOUNTED",
+    "FAILED_OR_AMBIGUOUS_REQUESTS_TRIGGER_STOP_WITHOUT_AUTOMATIC_RETRY",
+    "ALL_EVIDENCE_ARTIFACT_DIGESTS_AND_PINNED_CODE_ORIGIN",
+    "ADMIN_RESET_OR_RULESET_MUTABILITY_LIMITATION_DISCLOSED"
+  ],
+  "forbidden_proof_promotions": [
+    "HTTP_404_ONLY_NEVER_CAS",
+    "OFFLINE_SIMULATION_NEVER_REAL_CAS",
+    "ONE_201_ONE_422_WITHOUT_OVERLAP_NEVER_RACE_PROOF",
+    "SEPARATE_BYPASS_SNAPSHOT_NEVER_SAME_RUN_ATTESTATION",
+    "READ_ONLY_GREEN_NEVER_WRITE_APPROVAL",
+    "GITHUB_PROTECTED_REF_NEVER_ADMIN_IRREVOCABILITY",
+    "MERGE_IS_NEVER_EXPLICIT_DISPATCH_APPROVAL"
+  ],
+  "current_state": {
+    "writer_workflow_installed": false,
+    "github_write_source_gate_enabled": false,
+    "approved_workflow_head_sha": null,
+    "privileged_token_granted": false,
+    "owner_approval_present": false,
+    "independent_signed_auditor_present": false,
+    "actual_github_create_ref_post_count": 0,
+    "actual_provider_post_count": 0,
+    "real_cross_run_cas_proven": false,
+    "admin_irrevocable_one_time_consumption_proven": false,
+    "provider_dispatch": "DENY",
+    "final_classification": "OFFLINE_FINAL_APPROVAL_AUDIT_PLAN_ONLY_NO_GITHUB_WRITE_AUTHORITY"
+  }
+}
