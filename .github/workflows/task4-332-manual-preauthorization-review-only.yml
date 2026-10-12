@@ -1,4 +1,4 @@
-name: Task4 341 Manual Offline Preauthorization and Bypass Snapshot Review (NO WRITE)
+name: Task4 342 Manual Offline CAS Approval and Audit Review (NO WRITE)
 on:
   workflow_dispatch:
 
@@ -197,9 +197,41 @@ jobs:
             contracts/TASK4_341_SEPARATE_READ_BYPASS_EVIDENCE_FREEZE_V1.json \
             results/task4-341-separate-read-bypass-offline-review.json \
             > results/task4-341-file-sha256.txt
+      - name: Review Task4 342 future CAS approval and independent audit gates (OFFLINE ONLY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest -q -o addopts= tests/test_task4_342_final_cas_approval_audit_review_v1.py \
+            --junitxml=results/task4-342-junit.xml | tee results/task4-342-pytest.log
+          python scripts/task4_342_final_cas_approval_audit_review_only_v1.py \
+            results/task4-342-final-cas-approval-audit-review-only.json | tee results/task4-342-report.log
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("results/task4-342-final-cas-approval-audit-review-only.json")
+          d=json.loads(p.read_text())
+          h=d.pop("report_sha256")
+          raw=json.dumps(d,sort_keys=True,ensure_ascii=False,separators=(",",":"),allow_nan=False).encode()
+          assert hashlib.sha256(raw).hexdigest()==h
+          assert d["explicit_owner_approval_present"] is False
+          assert d["approved_exact_future_writer_workflow_sha"] is None
+          assert d["real_writer_workflow_installed"] is False
+          assert d["max_posts_planned_only"]==2
+          assert d["max_retries_planned_only"]==0
+          assert d["real_github_gets_in_this_review"]==0
+          assert d["real_github_create_ref_posts_in_this_review"]==0
+          assert d["real_provider_posts_in_this_review"]==0
+          assert d["github_ref_write_authorized"] is False
+          assert d["provider_dispatch"]=="DENY"
+          print("TASK4_342_FUTURE_CAS_APPROVAL_AUDIT_FREEZE_OFFLINE_ONLY_WRITE_DENIED")
+          PY
+          sha256sum scripts/task4_342_final_cas_approval_audit_review_only_v1.py \
+            tests/test_task4_342_final_cas_approval_audit_review_v1.py \
+            contracts/TASK4_342_REAL_CAS_FINAL_APPROVAL_AUDIT_REVIEW_ONLY_V1.json \
+            results/task4-342-final-cas-approval-audit-review-only.json \
+            > results/task4-342-file-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: task4-341-offline-separate-bypass-snapshot-review-only
+          name: task4-342-offline-cas-approval-and-independent-audit-review-only
           path: results/*
           if-no-files-found: warn
