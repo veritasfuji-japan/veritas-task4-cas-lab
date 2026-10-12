@@ -33,7 +33,7 @@ UPDATED_AT="2026-10-11T22:00:45.379+09:00"
 WRITER=".github/workflows/task4-330-authorized-create-ref.yml"
 CLASSIFICATION="OFFLINE_FINAL_APPROVAL_AUDIT_PLAN_ONLY_NO_GITHUB_WRITE_AUTHORITY"
 ROLES=("PREFLIGHT","A","B","C")
-HEX40=re.compile(r"[0-9a-f]{40}\\Z")
+HEX40=re.compile(r"[0-9a-f]{40}\Z")
 
 PREDECESSOR={
     "task4_340_run_id":38186765875,
