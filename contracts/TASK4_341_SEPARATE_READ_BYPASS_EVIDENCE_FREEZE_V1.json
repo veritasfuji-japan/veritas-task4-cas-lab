@@ -1,0 +1,125 @@
+{
+  "schema": "veritas.task4.separate-read-ruleset-bypass-evidence-freeze.v1",
+  "rule_of_one": "TASK4_341_SEPARATE_GITHUB_READ_PATH_BYPASS_EVIDENCE_NEVER_RUNTIME_AUTHORITY",
+  "repository": "veritasfuji-japan/veritas-task4-cas-lab",
+  "repository_id": 1414228001,
+  "frozen_source_main_sha": "cd1d137da8af98620ddd59f9adc1bee889128955",
+  "source_run_id": 38186765875,
+  "source_job_id": 114610648509,
+  "source_run_attempt": 1,
+  "source_run_conclusion": "success",
+  "source_artifact_id": 11719338461,
+  "source_artifact_size_bytes": 7184,
+  "source_artifact_zip_sha256": "51e4af5d773b2c158cc128b45b1bb2501980d84c6e10b37aae4526be0c550a34",
+  "source_report_file_sha256": "adb10902ff7868ee631117e08471cf90900192429055425ccd1a2d544444f947",
+  "source_junit_testcases": 302,
+  "source_run_report": {
+    "actual_authenticated_get_count": 5,
+    "approval_token_persisted": false,
+    "body_sha256": {
+      "candidate": "7e7fdf77854510b7bbbdcf2fb7f0d02fc1cdcd2a5cba8e9304d006f972fb43e5",
+      "main": "6904a5d4009ab045a218aa263ebfcd1b0d26323b3b9db0af1028df016fd5e0b3",
+      "repository": "f5c2a1e261b7468a82009a28f357d2a38cd79680162e6bf541db978409d18603",
+      "ruleset": "458224c95e3687cc0724cb3d77bfc82e749402aaaacb778ad8558e16dcae3828",
+      "target": "ac251c185a1b3fb0ff77f9a7976f0f6b83e40194f52b60e332fb1374e9cfd2ae"
+    },
+    "event": "workflow_dispatch",
+    "exact_get_paths": [
+      "/repos/veritasfuji-japan/veritas-task4-cas-lab",
+      "/repos/veritasfuji-japan/veritas-task4-cas-lab/commits/main",
+      "/repos/veritasfuji-japan/veritas-task4-cas-lab/git/commits/9edd28eee24da559fc0ad24fd97291944acc2ed4",
+      "/repos/veritasfuji-japan/veritas-task4-cas-lab/rulesets/24880024",
+      "/repos/veritasfuji-japan/veritas-task4-cas-lab/git/ref/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73"
+    ],
+    "failure_code": null,
+    "future_writer_authorized": false,
+    "github_write_permission_granted": false,
+    "head_sha": "cd1d137da8af98620ddd59f9adc1bee889128955",
+    "http_statuses": {
+      "candidate": 404,
+      "main": 200,
+      "repository": 200,
+      "ruleset": 200,
+      "target": 200
+    },
+    "provider_dispatch": "DENY",
+    "read_response_body_persisted": false,
+    "real_github_create_ref_post_count": 0,
+    "real_provider_post_count": 0,
+    "report_sha256": "ec6be5f09a67b3dabbde4dd419e0872ee93e478ed3dfc2ca501bf2b6d04d7a71",
+    "rule_of_one": "TASK4_338_REAL_AUTHENTICATED_GITHUB_GET_NO_EXECUTION_AUTHORITY",
+    "ruleset_static_drift_fields": [],
+    "run_id": "38186765875",
+    "source": "AUTHENTICATED_GITHUB_HOSTED_ACTIONS_GET",
+    "verdict": {
+      "admin_can_modify_ruleset_not_excluded": true,
+      "all_five_expected_http_statuses": true,
+      "classification": "FIVE_LIVE_GETS_BYPASS_VISIBILITY_INCOMPLETE",
+      "current_actor_bypass_visible": true,
+      "observed_ref_missing_at_this_instant": true,
+      "real_cross_run_cas_proven": false,
+      "ruleset_bypass_list_visible": false,
+      "ruleset_full_bypass_verified": false,
+      "ruleset_updated_at_exact_instant_verified": true,
+      "ruleset_updated_at_text_format_differs": true,
+      "write_authorized": false
+    },
+    "verification_outcome": "PASS_READONLY_ONLY",
+    "workflow_ref": "veritasfuji-japan/veritas-task4-cas-lab/.github/workflows/task4-338-live-authenticated-readonly-preflight-manual.yml@refs/heads/main"
+  },
+  "separate_ruleset_observation": {
+    "api_url": "https://api.github.com/repos/veritasfuji-japan/veritas-task4-cas-lab/rulesets/24880024",
+    "method": "CONNECTED_GITHUB_REST_GET",
+    "observation_timestamp_attested": false,
+    "raw_response_signed": false,
+    "observer_token_scope_attested": false,
+    "same_runner_as_source": false,
+    "same_instant_as_source_attested": false,
+    "ruleset_projection": {
+      "id": 24880024,
+      "name": "task4-cas-proof-ref-protection",
+      "target": "branch",
+      "source_type": "Repository",
+      "enforcement": "active",
+      "conditions": {
+        "ref_name": {
+          "exclude": [],
+          "include": [
+            "refs/heads/offline-test-ledger/task4-329-de45893cb289d9bca20ab879ac6d2f73"
+          ]
+        }
+      },
+      "rules": [
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "non_fast_forward"
+        },
+        {
+          "type": "update"
+        }
+      ],
+      "updated_at": "2026-10-11T22:00:45.379+09:00",
+      "bypass_actors": [],
+      "current_user_can_bypass": "never"
+    }
+  },
+  "bridge_claims": {
+    "independent_ruleset_field_snapshot_recorded": true,
+    "common_field_compatibility_checked_offline": true,
+    "raw_ruleset_http_body_digest_reconstructable": false,
+    "source_runner_bypass_list_observed": false,
+    "separate_observer_bypass_list_observed": true,
+    "runtime_no_bypass_attested": false,
+    "independent_admin_custody_attested": false,
+    "authorization_at_execution_attested": false,
+    "real_github_post_count": 0,
+    "real_provider_post_count": 0,
+    "real_cross_run_cas_proven": false,
+    "irreversible_single_use_proven": false,
+    "future_writer_authorized": false,
+    "provider_dispatch": "DENY",
+    "classification": "SEPARATE_READ_SNAPSHOT_COMPATIBLE_NOT_SAME_RUN_BYPASS_PROOF"
+  }
+}
